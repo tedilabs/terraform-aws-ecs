@@ -23,6 +23,82 @@ variable "service_connect_defaults" {
   nullable = false
 }
 
+variable "encryption_at_rest" {
+  description = <<EOF
+  (Optional) A configuration of encryption at rest for managed storage. `encryption_at_rest` as defined below.
+    (Optional) `ebs` - A configuration of EBS volume encryption for EC2-based tasks. `ebs` as defined below.
+      (Optional) `kms_key` - The ARN of the KMS key to use for EBS volume encryption.
+    (Optional) `fargate_ephemeral_storage` - A configuration of ephemeral storage encryption for Fargate tasks. `fargate_ephemeral_storage` as defined below.
+      (Optional) `kms_key` - The ARN of the KMS key to use for Fargate ephemeral storage encryption.
+  EOF
+  type = object({
+    ebs = optional(object({
+      kms_key = optional(string)
+    }), {})
+    fargate_ephemeral_storage = optional(object({
+      kms_key = optional(string)
+    }), {})
+  })
+  default  = {}
+  nullable = false
+}
+
+variable "execute_command" {
+  description = <<EOF
+  (Optional) A configuration of the execute command (ECS Exec) for the ECS cluster. `execute_command` as defined below.
+    (Optional) `data_channel_encryption` - A configuration of data channel encryption for execute command. `data_channel_encryption` as defined below.
+      (Optional) `kms_key` - The ARN of the KMS key to use for encryption of data between the local client and the container.
+    (Optional) `logging` - A configuration for logging commands run using ECS Exec. `logging` as defined below.
+      (Optional) `mode` - The mode of logging for commands run using ECS Exec. Valid values are `NONE`, `DEFAULT`, `OVERRIDE`. Defaults to `DEFAULT`.
+        `NONE` - The ECS Exec command session is not logged.
+        `DEFAULT` - Send logs to CloudWatch Logs using the awslogs log driver that's configured in your task definition. If no awslogs log driver is configured in the task definition, the output won't be logged.
+        `OVERRIDE` - Log to the provided CloudWatch log group, Amazon S3 bucket, or both. Your ECS task role needs to include IAM permissions to log the output to CloudWatch and/or S3. Standard AWS data transfer charges and logging costs will apply.
+      (Optional) `cloudwatch_log_group` - A configuration for logging to a CloudWatch log group for commands run using ECS Exec. Must set `mode` to `OVERRIDE` to use this logging option. `cloudwatch_log_group` as defined below.
+        (Required) `name` - The name of the CloudWatch log group to send execute command logs to.
+        (Optional) `encryption_enabled` - Whether to enable encryption on the CloudWatch log group. Defaults to `true`.
+      (Optional) `s3_bucket` - A configuration for logging to an S3 bucket for commands run using ECS Exec. Must set `mode` to `OVERRIDE` to use this logging option. `s3_bucket` as defined below.
+        (Required) `name` - The name of the S3 bucket to send execute command logs to.
+        (Optional) `key_prefix` - An optional key prefix for the specified S3 bucket.
+        (Optional) `encryption_enabled` - Whether to enable encryption on the S3 bucket logs. Defaults to `true`.
+  EOF
+  type = object({
+    data_channel_encryption = optional(object({
+      kms_key = optional(string)
+    }), {})
+    logging = optional(object({
+      mode = optional(string, "DEFAULT")
+
+      cloudwatch_log_group = optional(object({
+        name               = string
+        encryption_enabled = optional(bool, true)
+      }))
+
+      s3_bucket = optional(object({
+        name               = string
+        key_prefix         = optional(string, "")
+        encryption_enabled = optional(bool, true)
+      }))
+    }), {})
+  })
+  default  = {}
+  nullable = false
+
+  validation {
+    condition     = contains(["NONE", "DEFAULT", "OVERRIDE"], var.execute_command.logging.mode)
+    error_message = "Valid values for `execute_command.logging.mode` are `NONE`, `DEFAULT`, and `OVERRIDE`."
+  }
+  validation {
+    condition = (var.execute_command.logging.mode == "OVERRIDE"
+      ? anytrue(
+        var.execute_command.logging.cloudwatch_log_group != null,
+        var.execute_command.logging.s3_bucket != null,
+      )
+      : true
+    )
+    error_message = "When `execute_command.logging.mode` is set to `OVERRIDE`, at least one of `execute_command.logging.cloudwatch_log_group` or `execute_command.logging.s3_bucket` must be provided."
+  }
+}
+
 variable "container_insights" {
   description = <<EOF
   (Optional) A configuration of Container Insights for the ECS cluster. `container_insights` as defined below.
@@ -41,49 +117,6 @@ variable "container_insights" {
     condition     = contains(["DISABLED", "ENABLED", "ENHANCED"], var.container_insights.mode)
     error_message = "Valid values for `container_insights.mode` are `DISABLED`, `ENABLED`, and `ENHANCED`."
   }
-}
-
-variable "execute_command" {
-  description = <<EOF
-  (Optional) A configuration of the execute command for the ECS cluster. `execute_command` as defined below.
-    (Optional) `logging` - The log setting to use for redirecting logs for execute command results. Valid values are `NONE`, `DEFAULT`, `OVERRIDE`. Defaults to `DEFAULT`.
-    (Optional) `encryption_kms_key` - The ARN of the KMS key to use for encryption of data between the local client and the container.
-    (Optional) `cloudwatch_log_group` - The name of the CloudWatch log group to send execute command logs to.
-    (Optional) `cloudwatch_encryption_enabled` - Whether to enable encryption on the CloudWatch log group. Defaults to `true`.
-    (Optional) `s3_bucket` - The name of the S3 bucket to send execute command logs to.
-    (Optional) `s3_key_prefix` - An optional prefix for the S3 bucket logs.
-    (Optional) `s3_encryption_enabled` - Whether to enable encryption on the S3 bucket logs. Defaults to `true`.
-  EOF
-  type = object({
-    logging                       = optional(string, "DEFAULT")
-    encryption_kms_key            = optional(string)
-    cloudwatch_log_group          = optional(string)
-    cloudwatch_encryption_enabled = optional(bool, true)
-    s3_bucket                     = optional(string)
-    s3_key_prefix                 = optional(string)
-    s3_encryption_enabled         = optional(bool, true)
-  })
-  default  = {}
-  nullable = false
-
-  validation {
-    condition     = contains(["NONE", "DEFAULT", "OVERRIDE"], var.execute_command.logging)
-    error_message = "Valid values for `execute_command.logging` are `NONE`, `DEFAULT`, `OVERRIDE`."
-  }
-}
-
-variable "managed_storage_encryption" {
-  description = <<EOF
-  (Optional) A configuration of managed storage encryption for Fargate ephemeral storage. `managed_storage_encryption` as defined below.
-    (Optional) `enabled` - Whether to enable encryption of ephemeral storage with a customer-managed KMS key. Defaults to `false`.
-    (Optional) `kms_key` - The ARN of the KMS key to use for encryption. Required when `enabled` is `true`.
-  EOF
-  type = object({
-    enabled = optional(bool, false)
-    kms_key = optional(string)
-  })
-  default  = {}
-  nullable = false
 }
 
 variable "default_capacity_provider_strategy" {

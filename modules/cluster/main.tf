@@ -50,25 +50,30 @@ resource "aws_ecs_cluster" "this" {
 
   configuration {
     managed_storage_configuration {
-      fargate_ephemeral_storage_kms_key_id = (var.managed_storage_encryption.enabled
-        ? var.managed_storage_encryption.kms_key
-        : null
-      )
+      kms_key_id                           = var.encryption_at_rest.ebs.kms_key
+      fargate_ephemeral_storage_kms_key_id = var.encryption_at_rest.fargate_ephemeral_storage.kms_key
     }
 
-    execute_command_configuration {
-      kms_key_id = var.execute_command.encryption_kms_key
-      logging    = var.execute_command.logging
+    dynamic "execute_command_configuration" {
+      for_each = [var.execute_command]
+      iterator = exec
 
-      dynamic "log_configuration" {
-        for_each = var.execute_command.logging == "OVERRIDE" ? ["go"] : []
+      content {
+        kms_key_id = exec.value.data_channel_encryption.kms_key
+        logging    = exec.value.logging.mode
 
-        content {
-          cloud_watch_log_group_name     = var.execute_command.cloudwatch_log_group
-          cloud_watch_encryption_enabled = var.execute_command.cloudwatch_encryption_enabled
-          s3_bucket_name                 = var.execute_command.s3_bucket
-          s3_key_prefix                  = var.execute_command.s3_key_prefix
-          s3_bucket_encryption_enabled   = var.execute_command.s3_encryption_enabled
+        dynamic "log_configuration" {
+          for_each = exec.value.logging.mode == "OVERRIDE" ? [exec.value.logging] : []
+          iterator = logging
+
+          content {
+            cloud_watch_log_group_name     = logging.value.cloudwatch_log_group.name
+            cloud_watch_encryption_enabled = logging.value.cloudwatch_log_group.encryption_enabled
+
+            s3_bucket_name               = logging.value.s3_bucket.name
+            s3_key_prefix                = logging.value.s3_bucket.key_prefix
+            s3_bucket_encryption_enabled = logging.value.s3_bucket.encryption_enabled
+          }
         }
       }
     }

@@ -25,26 +25,49 @@ output "service_connect_defaults" {
   }
 }
 
-output "container_insights" {
-  description = "The Container Insights configuration."
+output "encryption_at_rest" {
+  description = "The encryption at rest configuration for managed storage."
   value = {
-    mode = var.container_insights.mode
+    ebs = {
+      kms_key = aws_ecs_cluster.this.configuration[0].managed_storage_configuration[0].kms_key_id
+    }
+    fargate_ephemeral_storage = {
+      kms_key = aws_ecs_cluster.this.configuration[0].managed_storage_configuration[0].fargate_ephemeral_storage_kms_key_id
+    }
   }
 }
 
 output "execute_command" {
   description = "The execute command configuration."
   value = {
-    logging            = var.execute_command.logging
-    encryption_kms_key = var.execute_command.encryption_kms_key
+    data_channel_encryption = {
+      kms_key = aws_ecs_cluster.this.configuration[0].execute_command_configuration[0].kms_key_id
+    }
+    logging = {
+      mode = aws_ecs_cluster.this.configuration[0].execute_command_configuration[0].logging
+      cloudwatch_log_group = (aws_ecs_cluster.this.configuration[0].execute_command_configuration[0].logging == "OVERRIDE"
+        ? {
+          name               = aws_ecs_cluster.this.configuration[0].execute_command_configuration[0].log_configuration[0].cloud_watch_log_group_name
+          encryption_enabled = aws_ecs_cluster.this.configuration[0].execute_command_configuration[0].log_configuration[0].cloud_watch_encryption_enabled
+        }
+        : null
+      )
+      s3_bucket = (aws_ecs_cluster.this.configuration[0].execute_command_configuration[0].logging == "OVERRIDE"
+        ? {
+          name               = aws_ecs_cluster.this.configuration[0].execute_command_configuration[0].log_configuration[0].s3_bucket_name
+          key_prefix         = aws_ecs_cluster.this.configuration[0].execute_command_configuration[0].log_configuration[0].s3_key_prefix
+          encryption_enabled = aws_ecs_cluster.this.configuration[0].execute_command_configuration[0].log_configuration[0].s3_bucket_encryption_enabled
+        }
+        : null
+      )
+    }
   }
 }
 
-output "managed_storage_encryption" {
-  description = "The managed storage encryption configuration."
+output "container_insights" {
+  description = "The Container Insights configuration."
   value = {
-    enabled = var.managed_storage_encryption.enabled
-    kms_key = var.managed_storage_encryption.kms_key
+    mode = var.container_insights.mode
   }
 }
 
@@ -74,10 +97,11 @@ output "resource_group" {
   )
 }
 
-output "debug" {
-  value = {
-    for k, v in aws_ecs_cluster.this :
-    k => v
-    if !contains(["arn", "id", "name", "region", "tags", "tags_all", "setting", "service_connect_defaults"], k)
-  }
-}
+# output "debug" {
+#   description = "Debug output containing all cluster attributes except common ones."
+#   value = {
+#     for k, v in aws_ecs_cluster.this :
+#     k => v
+#     if !contains(["arn", "id", "name", "region", "tags", "tags_all", "setting", "service_connect_defaults", "configuration"], k)
+#   }
+# }

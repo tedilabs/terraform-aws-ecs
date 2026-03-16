@@ -1,0 +1,21 @@
+# Modules
+
+":floppy_disk: capacity-provider":
+- changed-files:
+  - any-glob-to-any-file:
+    - modules/capacity-provider/**/*
+
+":floppy_disk: cluster":
+- changed-files:
+  - any-glob-to-any-file:
+    - modules/cluster/**/*
+
+":floppy_disk: service":
+- changed-files:
+  - any-glob-to-any-file:
+    - modules/service/**/*
+
+":floppy_disk: task-definition":
+- changed-files:
+  - any-glob-to-any-file:
+    - modules/task-definition/**/*

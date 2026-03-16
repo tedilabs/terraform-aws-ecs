@@ -1,0 +1,13 @@
+# Warning
+- color: "fbca04"
+  description: "This issue or pull request is related to capacity-provider module."
+  name: ":floppy_disk: capacity-provider"
+- color: "fbca04"
+  description: "This issue or pull request is related to cluster module."
+  name: ":floppy_disk: cluster"
+- color: "fbca04"
+  description: "This issue or pull request is related to service  module."
+  name: ":floppy_disk: service"
+- color: "fbca04"
+  description: "This issue or pull request is related to task-definition  module."
+  name: ":floppy_disk: task-definition"

@@ -29,10 +29,10 @@ output "encryption_at_rest" {
   description = "The encryption at rest configuration for managed storage."
   value = {
     ebs = {
-      kms_key = aws_ecs_cluster.this.configuration[0].managed_storage_configuration[0].kms_key_id
+      kms_key = one(aws_ecs_cluster.this.configuration[*].managed_storage_configuration[0].kms_key_id)
     }
     fargate_ephemeral_storage = {
-      kms_key = aws_ecs_cluster.this.configuration[0].managed_storage_configuration[0].fargate_ephemeral_storage_kms_key_id
+      kms_key = one(aws_ecs_cluster.this.configuration[*].managed_storage_configuration[0].fargate_ephemeral_storage_kms_key_id)
     }
   }
 }
@@ -41,18 +41,18 @@ output "execute_command" {
   description = "The execute command configuration."
   value = {
     data_channel_encryption = {
-      kms_key = aws_ecs_cluster.this.configuration[0].execute_command_configuration[0].kms_key_id
+      kms_key = one(aws_ecs_cluster.this.configuration[*].execute_command_configuration[0].kms_key_id)
     }
     logging = {
-      mode = aws_ecs_cluster.this.configuration[0].execute_command_configuration[0].logging
-      cloudwatch_log_group = (aws_ecs_cluster.this.configuration[0].execute_command_configuration[0].logging == "OVERRIDE"
+      mode = one(aws_ecs_cluster.this.configuration[*].execute_command_configuration[0].logging)
+      cloudwatch_log_group = (one(aws_ecs_cluster.this.configuration[*].execute_command_configuration[0].logging) == "OVERRIDE"
         ? {
           name               = aws_ecs_cluster.this.configuration[0].execute_command_configuration[0].log_configuration[0].cloud_watch_log_group_name
           encryption_enabled = aws_ecs_cluster.this.configuration[0].execute_command_configuration[0].log_configuration[0].cloud_watch_encryption_enabled
         }
         : null
       )
-      s3_bucket = (aws_ecs_cluster.this.configuration[0].execute_command_configuration[0].logging == "OVERRIDE"
+      s3_bucket = (one(aws_ecs_cluster.this.configuration[*].execute_command_configuration[0].logging) == "OVERRIDE"
         ? {
           name               = aws_ecs_cluster.this.configuration[0].execute_command_configuration[0].log_configuration[0].s3_bucket_name
           key_prefix         = aws_ecs_cluster.this.configuration[0].execute_command_configuration[0].log_configuration[0].s3_key_prefix
@@ -72,13 +72,19 @@ output "container_insights" {
 }
 
 output "capacity_providers" {
-  description = "The list of capacity providers associated with the cluster."
-  value       = local.capacity_providers
+  description = "The capacity providers associated with the cluster."
+  value       = aws_ecs_cluster_capacity_providers.this.capacity_providers
 }
 
 output "default_capacity_provider_strategy" {
   description = "The default capacity provider strategy for the cluster."
-  value       = var.default_capacity_provider_strategy
+  value = {
+    for item in aws_ecs_cluster_capacity_providers.this.default_capacity_provider_strategy :
+    item.capacity_provider => {
+      weight = item.weight
+      base   = item.base
+    }
+  }
 }
 
 output "resource_group" {

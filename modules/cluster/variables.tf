@@ -119,41 +119,33 @@ variable "container_insights" {
   }
 }
 
-variable "default_capacity_provider_strategy" {
-  description = <<EOF
-  (Optional) A list of default capacity provider strategies for the ECS cluster. Each item of `default_capacity_provider_strategy` as defined below.
-    (Required) `capacity_provider` - The name of the capacity provider.
-    (Optional) `weight` - The relative percentage of the total number of tasks launched that should use the capacity provider. Defaults to `0`.
-    (Optional) `base` - The number of tasks, at a minimum, to run on the specified capacity provider. Only one capacity provider in a strategy can have a base defined. Defaults to `0`.
-  EOF
-  type = list(object({
-    capacity_provider = string
-    weight            = optional(number, 0)
-    base              = optional(number, 0)
-  }))
-  default  = []
-  nullable = false
-}
-
-variable "fargate_capacity_providers" {
-  description = <<EOF
-  (Optional) A configuration of Fargate capacity providers for the ECS cluster. `fargate_capacity_providers` as defined below.
-    (Optional) `fargate_enabled` - Whether to enable the FARGATE capacity provider. Defaults to `true`.
-    (Optional) `fargate_spot_enabled` - Whether to enable the FARGATE_SPOT capacity provider. Defaults to `false`.
-  EOF
-  type = object({
-    fargate_enabled      = optional(bool, true)
-    fargate_spot_enabled = optional(bool, false)
-  })
-  default  = {}
-  nullable = false
-}
-
-variable "managed_capacity_providers" {
-  description = "(Optional) A list of names of custom (managed) capacity providers to associate with the cluster. Defaults to `[]`."
-  type        = list(string)
+variable "capacity_providers" {
+  description = "(Optional) A set of names of custom (managed) capacity providers to associate with the cluster. To use a Fargate capacity provider, specify either the `FARGATE` or `FARGATE_SPOT` capacity providers. The Fargate capacity providers are available to all accounts and only need to be associated with a cluster to be used. Defaults to `[]`."
+  type        = set(string)
   default     = []
   nullable    = false
+}
+
+variable "default_capacity_provider_strategy" {
+  description = <<EOF
+  (Optional) A map of default capacity provider strategies for the ECS cluster. Each kye of the map is the name of a capacity provider, and the value is an object that defines the default strategy to use for that capacity provider. Each value of `default_capacity_provider_strategy` as defined below.
+    (Optional) `weight` - The relative percentage of the total number of tasks launched that should use the capacity provider. The weight value is taken into consideration after the base value, if defined, is satisfied.  If no weight value is specified, the default value of 0 is used. When multiple capacity providers are specified within a capacity provider strategy, at least one of the capacity providers must have a weight value greater than zero and any capacity providers with a weight of 0 can't be used to place tasks. If you specify multiple capacity providers in a strategy that all have a weight of 0 , any RunTask or CreateService actions using the capacity provider strategy will fail. Defaults to `0`.
+    (Optional) `base` - The number of tasks, at a minimum, to run on the specified capacity provider. Only one capacity provider in a strategy can have a base defined. Defaults to `0`.
+  EOF
+  type = map(object({
+    weight = optional(number, 0)
+    base   = optional(number, 0)
+  }))
+  default  = {}
+  nullable = false
+
+  validation {
+    condition = alltrue([
+      for capacity_provider, _ in var.default_capacity_provider_strategy :
+      contains(var.capacity_providers, capacity_provider)
+    ])
+    error_message = "All keys of `default_capacity_provider_strategy` must be included in `capacity_providers`."
+  }
 }
 
 variable "tags" {
@@ -169,6 +161,7 @@ variable "module_tags_enabled" {
   default     = true
   nullable    = false
 }
+
 
 ###################################################
 # Resource Group

@@ -54,6 +54,32 @@ variable "runtime" {
   }
 }
 
+variable "placement_constraints" {
+  description = <<EOF
+  (Optional) A list of placement constraints for the task definition. You can use constraints to place tasks based on member attributes. Maximum number of `placement_constraints` is `10`. Each item of `placement_constraints` as defined below.
+    (Optional) `type` - The type of constraint. Use `memberOf` to restrict the selection to a group of valid candidates. Deefaults to `memberOf`. Note that `distinctInstance` is not supported in task definitions.
+    (Reuiqred) `expression` - The Cluster Query Language expression to apply to the constraint.
+  EOF
+  type = list(object({
+    type       = optional(string, "memberOf")
+    expression = string
+  }))
+  default  = []
+  nullable = false
+
+  validation {
+    condition     = length(var.placement_constraints) <= 10
+    error_message = "Maximum number of `placement_constraints` is `10`."
+  }
+  validation {
+    condition = alltrue([
+      for constraint in var.placement_constraints :
+      contains(["memberOf"], constraint.type)
+    ])
+    error_message = "Valid values for `type` in `placement_constraints` are `memberOf`."
+  }
+}
+
 variable "resources" {
   description = <<EOF
   (Optional) A configuration for the resource requirements of the task. NOTE: Task-level CPU and memory parameters are ignored for Windows containers. We recommend specifying container-level resources for Windows containers. `resources` as defined below.
@@ -220,7 +246,7 @@ variable "container_definitions" {
 }
 
 variable "ephemeral_storage_size" {
-  description = "(Optional) The total amount (in GiB) of ephemeral storage to set for the task. The minimum supported value is `21` GiB and the maximum supported value is `200` GiB. Only supported when `rruntime.launch_types` includes `FARGATE`. Defaults to `21`."
+  description = "(Optional) The total amount (in GiB) of ephemeral storage to set for the task. The minimum supported value is `21` GiB and the maximum supported value is `200` GiB. Only supported when `runtime.launch_types` includes `FARGATE`. Defaults to `21`."
   type        = number
   default     = 21
   nullable    = false
@@ -259,6 +285,28 @@ variable "volumes" {
   default  = []
   nullable = false
 }
+
+variable "proxy_configuration" {
+  description = <<EOF
+  (Optional) A configuration for the App Mesh proxy. `proxy_configuration` as defined below.
+    (Required) `container_name` - The name of the container that will serve as the App Mesh proxy.
+    (Optional) `type` - The proxy type. The only supported value is `APPMESH`. Defaults to `APPMESH`.
+    (Optional) `properties` - A map of network configuration parameters to provide the Container Network Interface (CNI) plugin, specified as key-value pairs. Common App Mesh keys include `AppPorts`, `EgressIgnoredIPs`, `IgnoredUID`, `ProxyEgressPort`, `ProxyIngressPort`. Defaults to `{}`. NOTE: Do not include sensitive values in this map, as they are stored in plaintext in both the Terraform state and the AWS task definition.
+  EOF
+  type = object({
+    container_name = string
+    type           = optional(string, "APPMESH")
+    properties     = optional(map(string), {})
+  })
+  default  = null
+  nullable = true
+
+  validation {
+    condition     = var.proxy_configuration == null || var.proxy_configuration.type == "APPMESH"
+    error_message = "Valid values for `type` in `proxy_configuration` are `APPMESH`."
+  }
+}
+
 variable "tags" {
   description = "(Optional) A map of tags to add to all resources."
   type        = map(string)

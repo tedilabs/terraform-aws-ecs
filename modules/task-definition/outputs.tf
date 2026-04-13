@@ -42,6 +42,17 @@ output "runtime" {
   }
 }
 
+output "placement_constraints" {
+  description = "A list of placement constraints for the task definition."
+  value = [
+    for constraint in aws_ecs_task_definition.this.placement_constraints :
+    {
+      type       = constraint.type
+      expression = constraint.expression
+    }
+  ]
+}
+
 output "resources" {
   description = "The resource requirements for the task."
   value = {
@@ -104,6 +115,6 @@ output "resource_group" {
 #   value = {
 #     for k, v in aws_ecs_task_definition.this :
 #     k => v
-#     if !contains(["arn", "tags", "tags_all", "region", "execution_role_arn", "task_role_arn", "id", "arn_without_revision", "family", "revision", "pid_mode", "ipc_mode", "skip_destroy", "runtime_platform", "requires_compatibilities", "cpu", "memory", "enable_fault_injection", "track_latest", "network_mode"], k)
+#     if !contains(["arn", "tags", "tags_all", "region", "execution_role_arn", "task_role_arn", "id", "arn_without_revision", "family", "revision", "pid_mode", "ipc_mode", "skip_destroy", "runtime_platform", "requires_compatibilities", "cpu", "memory", "enable_fault_injection", "track_latest", "network_mode", "placement_constraints"], k)
 #   }
 # }

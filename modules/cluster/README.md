@@ -1,4 +1,4 @@
-# ecs-cluster
+# cluster
 
 This module creates following resources.
 

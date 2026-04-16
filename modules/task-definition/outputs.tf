@@ -115,6 +115,6 @@ output "resource_group" {
 #   value = {
 #     for k, v in aws_ecs_task_definition.this :
 #     k => v
-#     if !contains(["arn", "tags", "tags_all", "region", "execution_role_arn", "task_role_arn", "id", "arn_without_revision", "family", "revision", "pid_mode", "ipc_mode", "skip_destroy", "runtime_platform", "requires_compatibilities", "cpu", "memory", "enable_fault_injection", "track_latest", "network_mode", "placement_constraints"], k)
+#     if !contains(["arn", "tags", "tags_all", "region", "execution_role_arn", "task_role_arn", "id", "arn_without_revision", "family", "revision", "pid_mode", "ipc_mode", "skip_destroy", "runtime_platform", "requires_compatibilities", "cpu", "memory", "enable_fault_injection", "track_latest", "network_mode", "placement_constraints", "proxy_configuration"], k)
 #   }
 # }

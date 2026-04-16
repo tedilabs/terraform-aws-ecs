@@ -286,27 +286,6 @@ variable "volumes" {
   nullable = false
 }
 
-variable "proxy_configuration" {
-  description = <<EOF
-  (Optional) A configuration for the App Mesh proxy. `proxy_configuration` as defined below.
-    (Required) `container_name` - The name of the container that will serve as the App Mesh proxy.
-    (Optional) `type` - The proxy type. The only supported value is `APPMESH`. Defaults to `APPMESH`.
-    (Optional) `properties` - A map of network configuration parameters to provide the Container Network Interface (CNI) plugin, specified as key-value pairs. Common App Mesh keys include `AppPorts`, `EgressIgnoredIPs`, `IgnoredUID`, `ProxyEgressPort`, `ProxyIngressPort`. Defaults to `{}`. NOTE: Do not include sensitive values in this map, as they are stored in plaintext in both the Terraform state and the AWS task definition.
-  EOF
-  type = object({
-    container_name = string
-    type           = optional(string, "APPMESH")
-    properties     = optional(map(string), {})
-  })
-  default  = null
-  nullable = true
-
-  validation {
-    condition     = var.proxy_configuration == null || var.proxy_configuration.type == "APPMESH"
-    error_message = "Valid values for `type` in `proxy_configuration` are `APPMESH`."
-  }
-}
-
 variable "tags" {
   description = "(Optional) A map of tags to add to all resources."
   type        = map(string)

@@ -36,6 +36,8 @@ locals {
 # TODO: `container_definitions`
 # TODO: `ephemeral_storage`
 # TODO: `volume`
+# INFO: Deprecated attributes
+# - `proxy_configuration`
 resource "aws_ecs_task_definition" "this" {
   region = var.region
 
@@ -110,18 +112,6 @@ resource "aws_ecs_task_definition" "this" {
           }
         }
       }
-    }
-  }
-
-
-  ## Proxy Configuration
-  dynamic "proxy_configuration" {
-    for_each = var.proxy_configuration != null ? [var.proxy_configuration] : []
-
-    content {
-      type           = proxy_configuration.value.type
-      container_name = proxy_configuration.value.container_name
-      properties     = proxy_configuration.value.properties
     }
   }
 

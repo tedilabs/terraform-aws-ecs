@@ -128,7 +128,7 @@ variable "capacity_providers" {
 
 variable "default_capacity_provider_strategy" {
   description = <<EOF
-  (Optional) A map of default capacity provider strategies for the ECS cluster. Each kye of the map is the name of a capacity provider, and the value is an object that defines the default strategy to use for that capacity provider. Each value of `default_capacity_provider_strategy` as defined below.
+  (Optional) A map of default capacity provider strategies for the ECS cluster. Each key of the map is the name of a capacity provider, and the value is an object that defines the default strategy to use for that capacity provider. Each value of `default_capacity_provider_strategy` as defined below.
     (Optional) `weight` - The relative percentage of the total number of tasks launched that should use the capacity provider. The weight value is taken into consideration after the base value, if defined, is satisfied.  If no weight value is specified, the default value of 0 is used. When multiple capacity providers are specified within a capacity provider strategy, at least one of the capacity providers must have a weight value greater than zero and any capacity providers with a weight of 0 can't be used to place tasks. If you specify multiple capacity providers in a strategy that all have a weight of 0 , any RunTask or CreateService actions using the capacity provider strategy will fail. Defaults to `0`.
     (Optional) `base` - The number of tasks, at a minimum, to run on the specified capacity provider. Only one capacity provider in a strategy can have a base defined. Defaults to `0`.
   EOF

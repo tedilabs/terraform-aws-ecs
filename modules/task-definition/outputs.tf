@@ -66,6 +66,101 @@ output "network_mode" {
   value       = aws_ecs_task_definition.this.network_mode
 }
 
+locals {
+  volumes = [
+    for volume in aws_ecs_task_definition.this.volume :
+    merge(volume, {
+      type = (volume.configure_at_launch
+        ? "CONFIGURE_AT_LAUNCH"
+        : (length(volume.docker_volume_configuration) > 0
+          ? "DOCKER"
+          : (length(volume.efs_volume_configuration) > 0
+            ? "EFS"
+            : (length(volume.fsx_windows_file_server_volume_configuration) > 0
+              ? "FSX_WINDOWS_FILE_SERVER"
+              : (length(volume.s3files_volume_configuration) > 0
+                ? "S3_FILES"
+                : "HOST"
+              )
+            )
+          )
+        )
+      )
+    })
+  ]
+}
+output "volumes" {
+  description = "The list of data volumes that can be used by containers in the task definition."
+  value = {
+    for volume in local.volumes :
+    volume.name => merge(
+      {
+        name = volume.name
+        type = volume.type
+      },
+      (volume.type == "HOST"
+        ? {
+          host = {
+            path = volume.host_path
+          }
+        }
+        : {}
+      ),
+      (volume.type == "DOCKER"
+        ? {
+          docker = {
+            labels        = volume.docker_volume_configuration[0].labels
+            scope         = volume.docker_volume_configuration[0].scope
+            autoprovision = volume.docker_volume_configuration[0].autoprovision
+            driver        = volume.docker_volume_configuration[0].driver
+            driver_opts   = volume.docker_volume_configuration[0].driver_opts
+          }
+        }
+        : {}
+      ),
+      (volume.type == "EFS"
+        ? {
+          efs = {
+            file_system             = volume.efs_volume_configuration[0].file_system_id
+            root_directory          = volume.efs_volume_configuration[0].root_directory
+            transit_encryption      = volume.efs_volume_configuration[0].transit_encryption ? "ENABLED" : "DISABLED"
+            transit_encryption_port = volume.efs_volume_configuration[0].transit_encryption_port
+            authorization = {
+              iam_enabled  = volume.efs_volume_configuration[0].authorization_config[0].iam == "ENABLED"
+              access_point = volume.efs_volume_configuration[0].authorization_config[0].access_point_id
+            }
+          }
+        }
+        : {}
+      ),
+      (volume.type == "FSX_WINDOWS_FILE_SERVER"
+        ? {
+          fsx_windows_file_server = {
+            file_system    = volume.fsx_windows_file_server_volume_configuration[0].file_system_id
+            root_directory = volume.fsx_windows_file_server_volume_configuration[0].root_directory
+            authorization = {
+              domain                = volume.fsx_windows_file_server_volume_configuration[0].authorization[0].domain
+              credentials_parameter = volume.fsx_windows_file_server_volume_configuration[0].authorization[0].credentials_parameter
+            }
+          }
+        }
+        : {}
+      ),
+      (volume.type == "S3_FILES"
+        ? {
+          s3_files = {
+            file_system             = volume.s3files_volume_configuration[0].file_system_arn
+            access_point            = volume.s3files_volume_configuration[0].access_point_arn
+            root_directory          = volume.s3files_volume_configuration[0].root_directory
+            transit_encryption_port = volume.s3files_volume_configuration[0].transit_encryption_port
+          }
+        }
+        : {}
+      ),
+    )
+  }
+}
+
 output "namespace_sharing" {
   description = "The namespace sharing configuration for the task definition."
   value = {

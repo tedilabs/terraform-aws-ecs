@@ -125,6 +125,111 @@ variable "network_mode" {
   }
 }
 
+variable "ephemeral_storage_size" {
+  description = "(Optional) The total amount (in GiB) of ephemeral storage to set for the task. The minimum supported value is `21` GiB and the maximum supported value is `200` GiB. Only supported when `runtime.launch_types` includes `FARGATE`. Defaults to `21`."
+  type        = number
+  default     = 21
+  nullable    = false
+
+  validation {
+    condition     = var.ephemeral_storage_size >= 21 && var.ephemeral_storage_size <= 200
+    error_message = "Valid value for `ephemeral_storage_size` is between 21 and 200."
+  }
+}
+
+variable "volumes" {
+  description = <<EOF
+  (Optional) A list of volume configurations for tasks launched using this task definition. Only one volume configured at launch si supported. Each item of `volumes` as defined below.
+    (Required) `name` - The name of the volume. Up to 255 letters (uppercase and lowercase), numbers, underscores, and hyphens are allowed.
+    (Optional) `type` - A source type for the volume. Valid values are `CONFIGURE_AT_LAUNCH`, `HOST`, `DOCKER`, `EFS`, `FSX_WINDOWS_FILE_SERVER` and `S3_FILES`. Defaults to `HOST`.
+    (Optional) `host` - The host volume configuration. `host` as defined below.
+      (Optional) `path` - The path on the host container instance that is presented to the container. If not set, ECS will create a nonpersistent data volume that starts empty and is deleted after the task has finished.
+    (Optional) `docker` - The Docker volume configuration. `docker` as defined below.
+      (Optional) `labels` - A map of custom metadata to add to the Docker volume. Defaults to `{}`.
+      (Optional) `scope` - The scope for the Docker volume that determines its lifecycle. Valid values are `task` and `shared`. Defaults to `task`.
+        `task` - The Docker volume is automatically provisioned when the task starts and destroyed when the task stops.
+        `shared` - The Docker volume persists after the task stops.
+      (Optional) `autoprovision` - Whether to automatically provision the Docker volume. If `true`, the Docker volume is automatically provisioned when the task starts. If `false`, the Docker volume must already exist when the task starts. Only used when `scope` is `shared`. Defaults to `true`.
+      (Optional) `driver` - The Docker volume driver to use. The driver value must match the driver name provided by Docker because it is used for task placement.
+      (Optional) `driver_opts` - A map of Docker driver-specific options. This is used to specify parameters for the driver.
+    (Optional) `efs` - The EFS volume configuration. `efs` as defined below.
+      (Required) `file_system` - The ID of the EFS file system.
+      (Optional) `root_directory` - The directory within the EFS file system to mount as the root directory. Defaults to `/`.
+      (Optional) `transit_encryption_enabled` - Whether to use encryption in transit between the ECS host and the EFS file system. Transit encryption must be truned on if EFS IAM Authorization is used. Defaults to `false`.
+      (Optional) `transit_encryption_port` - The port to use when sending encrypted data between the Amazon ECS host and the Amazon EFS server. If you do not specify a transit encryption port, it will use the port selection strategy that the Amazon EFS mount helper uses.
+      (Optional) `authorization` - The authorization configuration for the EFS volume. `authorization` as defined below.
+        (Optional) `iam_enabled` - Whether to use the Amazon ECS task role defined in a task definition when mounting the Amazon EFS file system. If it is turned on, transit encryption must be turned on in the EFSVolumeConfiguration. Defaults to `false`.
+        (Optional) `access_point` - The Amazon EFS access point ID to use.
+    (Optional) `fsx_windows_file_server` - The FSx for Windows File Server volume configuration. `fsx_windows_file_server` as defined below.
+      (Required) `file_system` - The ID of the FSx for Windows File Server file system to use.
+      (Required) `root_directory` - The directory within the Amazon FSx for Windows File Server file system to mount as the root directory inside the host.
+      (Required) `authorization` - The authorization configuration for the FSx for Windows File Server volume. `authorization` as defined below.
+        (Required) `domain` - A fully qualified domain name hosted by an AWS Directory Service Managed Microsoft AD (Active Directory) or self-hosted AD on Amazon EC2.
+        (Required) `credentials_parameter` - The authorization credential option to use. The authorization credential options can be provided using either the Amazon Resource Name (ARN) of an AWS Secrets Manager secret or AWS Systems Manager Parameter Store parameter. The ARNs refer to the stored credentials.
+    (Optional) `s3_files` - The S3 Files volume configuration. `s3_files` as defined below.
+      (Required) `file_system` - The ARN of the S3 Files file system to mount.
+      (Optional) `access_point` - The ARN of the S3 Files access point to use.
+      (Optional) `root_directory` - The directory within the Amazon S3 Files file system to mount as the root directory. Defaults to `/`.
+      (Optional) `transit_encryption_port` - The port to use for sending encrypted data between the ECS host and the S3 Files file system. If you do not specify a transit encryption port, it will use the port selection strategy that the Amazon S3 Files mount helper uses.
+  EOF
+  type = list(object({
+    name = string
+    type = optional(string, "HOST")
+    host = optional(object({
+      path = optional(string)
+    }), {})
+    docker = optional(object({
+      labels        = optional(map(string), {})
+      scope         = optional(string, "task")
+      autoprovision = optional(bool, true)
+      driver        = optional(string)
+      driver_opts   = optional(map(string), {})
+    }), {})
+    efs = optional(object({
+      file_system                = string
+      root_directory             = optional(string, "/")
+      transit_encryption_enabled = optional(bool, false)
+      transit_encryption_port    = optional(number)
+      authorization = optional(object({
+        iam_enabled  = optional(bool, false)
+        access_point = optional(string)
+      }), {})
+    }))
+    fsx_windows_file_server = optional(object({
+      file_system    = string
+      root_directory = string
+      authorizeion = object({
+        domain                = string
+        credentials_parameter = string
+      })
+    }))
+    s3_files = optional(object({
+      file_system             = string
+      access_point            = optional(string)
+      root_directory          = optional(string, "/")
+      transit_encryption_port = optional(number)
+    }))
+  }))
+  default  = []
+  nullable = false
+
+  validation {
+    condition = alltrue([
+      for volume in var.volumes :
+      contains(["CONFIGURE_AT_LAUNCH", "HOST", "DOCKER", "EFS", "FSX_WINDOWS_FILE_SERVER", "S3_FILES"], volume.type)
+    ])
+    error_message = "Valid values for `type` in `volumes` are `CONFIGURE_AT_LAUNCH`, `HOST`, `DOCKER`, `EFS`, `FSX_WINDOWS_FILE_SERVER`, `S3_FILES`."
+  }
+  validation {
+    condition = alltrue([
+      for volume in var.volumes :
+      contains(["task", "shared"], volume.docker.scope)
+      if volume.type == "DOCKER"
+    ])
+    error_message = "Valid values for `docker.scope` in `volumes` are `task`, `shared`."
+  }
+}
+
 variable "namespace_sharing" {
   description = <<EOF
   (Optional) A configuration for namespace sharing. `namespace_sharing` as defined below.
@@ -243,47 +348,6 @@ variable "container_definitions" {
   description = "(Required) A valid JSON document that describes the containers to run as part of the task."
   type        = string
   nullable    = false
-}
-
-variable "ephemeral_storage_size" {
-  description = "(Optional) The total amount (in GiB) of ephemeral storage to set for the task. The minimum supported value is `21` GiB and the maximum supported value is `200` GiB. Only supported when `runtime.launch_types` includes `FARGATE`. Defaults to `21`."
-  type        = number
-  default     = 21
-  nullable    = false
-
-  validation {
-    condition     = var.ephemeral_storage_size >= 21 && var.ephemeral_storage_size <= 200
-    error_message = "Valid value for `ephemeral_storage_size` is between 21 and 200."
-  }
-}
-
-variable "volumes" {
-  description = <<EOF
-  (Optional) A list of volume configurations for the task definition. Each item of `volumes` as defined below.
-    (Required) `name` - The name of the volume.
-    (Optional) `host_path` - The path on the host container instance that is presented to the container.
-    (Optional) `efs_volume` - The EFS volume configuration. `efs_volume` as defined below.
-      (Required) `file_system` - The ID of the EFS file system.
-      (Optional) `root_directory` - The directory within the EFS file system to mount as the root directory. Defaults to `/`.
-      (Optional) `transit_encryption_enabled` - Whether to enable transit encryption for the EFS volume. Defaults to `false`.
-      (Optional) `transit_encryption_port` - The port to use for transit encryption.
-      (Optional) `iam_authorization_enabled` - Whether to use IAM authorization for the EFS volume. Defaults to `false`.
-      (Optional) `access_point` - The ID of the EFS access point.
-  EOF
-  type = list(object({
-    name      = string
-    host_path = optional(string)
-    efs_volume = optional(object({
-      file_system                = string
-      root_directory             = optional(string, "/")
-      transit_encryption_enabled = optional(bool, false)
-      transit_encryption_port    = optional(number)
-      iam_authorization_enabled  = optional(bool, false)
-      access_point               = optional(string)
-    }))
-  }))
-  default  = []
-  nullable = false
 }
 
 variable "tags" {

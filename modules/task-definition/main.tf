@@ -35,7 +35,7 @@ locals {
 
 # TODO: `container_definitions`
 # TODO: `ephemeral_storage`
-# TODO: `volume`
+# TODO: `volume[type=EFS].runtime_platform`
 # INFO: Deprecated attributes
 # - `proxy_configuration`
 resource "aws_ecs_task_definition" "this" {
@@ -90,26 +90,86 @@ resource "aws_ecs_task_definition" "this" {
     for_each = var.volumes
 
     content {
-      name      = volume.value.name
-      host_path = volume.value.host_path
+      name = volume.value.name
 
-      dynamic "efs_volume_configuration" {
-        for_each = volume.value.efs_volume != null ? [volume.value.efs_volume] : []
+      configure_at_launch = (volume.value.type == "CONFIGURE_AT_LAUNCH"
+        ? true
+        : false
+      )
+      host_path = (volume.value.type == "HOST"
+        ? volume.value.host.path
+        : null
+      )
+
+      dynamic "docker_volume_configuration" {
+        for_each = (volume.value.type == "DOCKER"
+          ? [volume.value.docker]
+          : []
+        )
+        iterator = docker
 
         content {
-          file_system_id          = efs_volume_configuration.value.file_system
-          root_directory          = efs_volume_configuration.value.root_directory
-          transit_encryption      = efs_volume_configuration.value.transit_encryption_enabled ? "ENABLED" : "DISABLED"
-          transit_encryption_port = efs_volume_configuration.value.transit_encryption_port
+          labels = docker.value.labels
+          scope  = docker.value.scope
+          autoprovision = (docker.value.scope == "shared"
+            ? docker.value.autoprovision
+            : null
+          )
+          driver      = docker.value.driver
+          driver_opts = docker.value.driver_opts
+        }
+      }
 
-          dynamic "authorization_config" {
-            for_each = efs_volume_configuration.value.iam_authorization_enabled ? ["go"] : []
+      dynamic "efs_volume_configuration" {
+        for_each = (volume.value.type == "EFS"
+          ? [volume.value.efs]
+          : []
+        )
+        iterator = efs
 
-            content {
-              iam             = "ENABLED"
-              access_point_id = efs_volume_configuration.value.access_point
-            }
+        content {
+          file_system_id          = efs.value.file_system
+          root_directory          = efs.value.root_directory
+          transit_encryption      = efs.value.transit_encryption_enabled ? "ENABLED" : "DISABLED"
+          transit_encryption_port = efs.value.transit_encryption_port
+
+          authorization_config {
+            iam             = efs.value.authorization.iam_enabled ? "ENABLED" : "DISABLED"
+            access_point_id = efs.value.authorization.access_point
           }
+        }
+      }
+
+      dynamic "fsx_windows_file_server_volume_configuration" {
+        for_each = (volume.value.type == "FSX_WINDOWS_FILE_SERVER"
+          ? [volume.value.fsx_windows_file_server]
+          : []
+        )
+        iterator = fsx_windows_file_server
+
+        content {
+          file_system_id = fsx_windows_file_server.value.file_system
+          root_directory = fsx_windows_file_server.value.root_directory
+
+          authorization_config {
+            domain                = fsx_windows_file_server.value.authorization.domain
+            credentials_parameter = fsx_windows_file_server.value.authorization.credentials_parameter
+          }
+        }
+      }
+
+      dynamic "s3files_volume_configuration" {
+        for_each = (volume.value.type == "S3_FILES"
+          ? [volume.value.s3_files]
+          : []
+        )
+        iterator = s3files
+
+        content {
+          file_system_arn         = s3files.value.file_system
+          access_point_arn        = s3files.value.access_point
+          root_directory          = s3files.value.root_directory
+          transit_encryption_port = s3files.value.transit_encryption_port
         }
       }
     }
@@ -143,4 +203,10 @@ resource "aws_ecs_task_definition" "this" {
     local.module_tags,
     var.tags,
   )
+
+  lifecycle {
+    ignore_changes = [
+      container_definitions,
+    ]
+  }
 }

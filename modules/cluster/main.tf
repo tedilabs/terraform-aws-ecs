@@ -43,9 +43,16 @@ resource "aws_ecs_cluster" "this" {
   }
 
   configuration {
-    managed_storage_configuration {
-      kms_key_id                           = var.encryption_at_rest.ebs.kms_key
-      fargate_ephemeral_storage_kms_key_id = var.encryption_at_rest.fargate_ephemeral_storage.kms_key
+    dynamic "managed_storage_configuration" {
+      for_each = (var.encryption_at_rest.ebs.kms_key != null || var.encryption_at_rest.fargate_ephemeral_storage.kms_key != null
+        ? ["go"]
+        : []
+      )
+
+      content {
+        kms_key_id                           = var.encryption_at_rest.ebs.kms_key
+        fargate_ephemeral_storage_kms_key_id = var.encryption_at_rest.fargate_ephemeral_storage.kms_key
+      }
     }
 
     dynamic "execute_command_configuration" {

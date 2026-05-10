@@ -12,7 +12,7 @@ variable "name" {
 }
 
 variable "skip_destroy" {
-  description = "(Optional) Whether to skip destroying the task definition. Defaults to `false`. If `true`, the task definition will be deregistered but not deleted, and can be re-registered later. If `false`, the task definition will be deleted and cannot be re-registered."
+  description = "(Optional) Whether to skip destroying the task definition. Defaults to `true`. If `true`, the task definition will be deregistered but not deleted, and can be re-registered later. If `false`, the task definition will be deleted and cannot be re-registered."
   type        = bool
   default     = true
   nullable    = false

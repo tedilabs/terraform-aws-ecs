@@ -37,8 +37,8 @@ output "runtime" {
   EOF
   value = {
     launch_types = aws_ecs_task_definition.this.requires_compatibilities
-    os_family    = aws_ecs_task_definition.this.runtime_platform[0].operating_system_family
-    cpu_arch     = aws_ecs_task_definition.this.runtime_platform[0].cpu_architecture
+    os_family    = one(aws_ecs_task_definition.this.runtime_platform[*].operating_system_family)
+    cpu_arch     = one(aws_ecs_task_definition.this.runtime_platform[*].cpu_architecture)
   }
 }
 
@@ -63,7 +63,10 @@ output "resources" {
 
 output "network_mode" {
   description = "The Docker networking mode to use for the containers in the task."
-  value       = aws_ecs_task_definition.this.network_mode
+  value = (aws_ecs_task_definition.this.network_mode != ""
+    ? aws_ecs_task_definition.this.network_mode
+    : "default"
+  )
 }
 
 locals {

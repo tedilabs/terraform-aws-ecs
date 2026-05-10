@@ -49,10 +49,16 @@ resource "aws_ecs_task_definition" "this" {
 
 
   ## Runtime
-  requires_compatibilities = var.runtime.launch_types
+  requires_compatibilities = (length(var.runtime.launch_types) > 0
+    ? var.runtime.launch_types
+    : null
+  )
 
   dynamic "runtime_platform" {
-    for_each = [var.runtime]
+    for_each = (var.runtime.os_family != null && var.runtime.cpu_arch != null
+      ? [var.runtime]
+      : []
+    )
     iterator = runtime
 
     content {
@@ -76,7 +82,10 @@ resource "aws_ecs_task_definition" "this" {
   cpu    = var.resources.cpu
   memory = var.resources.memory
 
-  network_mode = var.network_mode
+  network_mode = (var.network_mode == "default"
+    ? null
+    : var.network_mode
+  )
 
   dynamic "ephemeral_storage" {
     for_each = var.ephemeral_storage_size > 21 ? ["go"] : []

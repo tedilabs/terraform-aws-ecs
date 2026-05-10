@@ -21,18 +21,18 @@ variable "skip_destroy" {
 variable "runtime" {
   description = <<EOF
   (Optional) A configuration for the runtime platform of the task definition. `runtime` as defined below.
-    (Optional) `launch_types` - A set of launch types that Amazon ECS validates the task definition against. A client exception is returned if the task definition doesn't validate against the compatibilities specified. Valid values are `EC2`, `FARGATE`, `EXTERNAL` and `MANAGED_INSTANCES`. Defaults to `["EC2"]`.
+    (Optional) `launch_types` - A set of launch types that Amazon ECS validates the task definition against. A client exception is returned if the task definition doesn't validate against the compatibilities specified. Valid values are `EC2`, `FARGATE`, `EXTERNAL` and `MANAGED_INSTANCES`.
       `EC2` — Run tasks on self-managed EC2 instances registered to the cluster.
       `FARGATE` — Run tasks on AWS-managed serverless compute with no infrastructure to provision or manage.
       `EXTERNAL` — Run tasks on on-premises or non-AWS infrastructure registered via ECS Anywhere.
       `MANAGED_INSTANCES` — Run tasks on AWS-managed EC2 instances that combine Fargate's operational simplicity with EC2's flexibility (e.g., GPU, specific instance types).
-    (Optional) `os_family` - The operating system family. Valid values are `LINUX`, `WINDOWS_SERVER_2004_CORE`, `WINDOWS_SERVER_2016_FULL`, `WINDOWS_SERVER_2019_FULL`, `WINDOWS_SERVER_2019_CORE`, `WINDOWS_SERVER_2022_FULL`, `WINDOWS_SERVER_2022_CORE`, `WINDOWS_SERVER_2025_FULL`, `WINDOWS_SERVER_2025_CORE`, `WINDOWS_SERVER_20H2_CORE`. Defaults to `LINUX`.
-    (Optional) `cpu_arch` - The CPU architecture. Valid values are `X86_64`, `ARM64`. Defaults to `X86_64`.
+    (Optional) `os_family` - The operating system family. Valid values are `LINUX`, `WINDOWS_SERVER_2004_CORE`, `WINDOWS_SERVER_2016_FULL`, `WINDOWS_SERVER_2019_FULL`, `WINDOWS_SERVER_2019_CORE`, `WINDOWS_SERVER_2022_FULL`, `WINDOWS_SERVER_2022_CORE`, `WINDOWS_SERVER_2025_FULL`, `WINDOWS_SERVER_2025_CORE`, `WINDOWS_SERVER_20H2_CORE`.
+    (Optional) `cpu_arch` - The CPU architecture. Valid values are `X86_64`, `ARM64`.
   EOF
   type = object({
-    launch_types = optional(set(string), ["EC2"])
-    os_family    = optional(string, "LINUX")
-    cpu_arch     = optional(string, "X86_64")
+    launch_types = optional(set(string), [])
+    os_family    = optional(string)
+    cpu_arch     = optional(string)
   })
   default  = {}
   nullable = false
@@ -45,11 +45,11 @@ variable "runtime" {
     error_message = "Valid values for `runtime.launch_types` are `EC2`, `FARGATE`, `EXTERNAL`, `MANAGED_INSTANCES`."
   }
   validation {
-    condition     = contains(["LINUX", "WINDOWS_SERVER_2004_CORE", "WINDOWS_SERVER_2016_FULL", "WINDOWS_SERVER_2019_FULL", "WINDOWS_SERVER_2019_CORE", "WINDOWS_SERVER_2022_FULL", "WINDOWS_SERVER_2022_CORE", "WINDOWS_SERVER_2025_FULL", "WINDOWS_SERVER_2025_CORE", "WINDOWS_SERVER_20H2_CORE"], var.runtime.os_family)
+    condition     = var.runtime.os_family == null || contains(["LINUX", "WINDOWS_SERVER_2004_CORE", "WINDOWS_SERVER_2016_FULL", "WINDOWS_SERVER_2019_FULL", "WINDOWS_SERVER_2019_CORE", "WINDOWS_SERVER_2022_FULL", "WINDOWS_SERVER_2022_CORE", "WINDOWS_SERVER_2025_FULL", "WINDOWS_SERVER_2025_CORE", "WINDOWS_SERVER_20H2_CORE"], var.runtime.os_family)
     error_message = "Valid values for `runtime.os_family` are `LINUX`, `WINDOWS_SERVER_2004_CORE`, `WINDOWS_SERVER_2016_FULL`, `WINDOWS_SERVER_2019_FULL`, `WINDOWS_SERVER_2019_CORE`, `WINDOWS_SERVER_2022_FULL`, `WINDOWS_SERVER_2022_CORE`, `WINDOWS_SERVER_2025_FULL`, `WINDOWS_SERVER_2025_CORE`, `WINDOWS_SERVER_20H2_CORE`."
   }
   validation {
-    condition     = contains(["X86_64", "ARM64"], var.runtime.cpu_arch)
+    condition     = var.runtime.cpu_arch == null || contains(["X86_64", "ARM64"], var.runtime.cpu_arch)
     error_message = "Valid values for `runtime.cpu_arch` are `X86_64`, `ARM64`."
   }
 }
@@ -105,7 +105,7 @@ variable "resources" {
 
 variable "network_mode" {
   description = <<EOF
-  (Optional) The Docker networking type of the containers in the task use. Valid values are `awsvpc`, `bridge`, `host`, `none`. Defaults to `awsvpc`.
+  (Optional) The Docker networking type of the containers in the task use. Valid values are `default`, `awsvpc`, `bridge`, `host`, `none`. Defaults to `default`.
 
     `awsvpc` - The task with an elastic network interface (ENI). When creating a service or running a task with this network mode you must specify a network configuration consisting of one or more subnets, security groups, and whether to assign the task a public IP address.
 
@@ -116,12 +116,12 @@ variable "network_mode" {
     `none` - The task with no external network connectivity.
   EOF
   type        = string
-  default     = "awsvpc"
+  default     = "default"
   nullable    = false
 
   validation {
-    condition     = contains(["awsvpc", "bridge", "host", "none"], var.network_mode)
-    error_message = "Valid values for `network_mode` are `awsvpc`, `bridge`, `host`, `none`."
+    condition     = contains(["default", "awsvpc", "bridge", "host", "none"], var.network_mode)
+    error_message = "Valid values for `network_mode` are `default`, `awsvpc`, `bridge`, `host`, `none`."
   }
 }
 
@@ -198,7 +198,7 @@ variable "volumes" {
     fsx_windows_file_server = optional(object({
       file_system    = string
       root_directory = string
-      authorizeion = object({
+      authorization = object({
         domain                = string
         credentials_parameter = string
       })

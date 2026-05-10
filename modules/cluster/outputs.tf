@@ -29,10 +29,10 @@ output "encryption_at_rest" {
   description = "The encryption at rest configuration for managed storage."
   value = {
     ebs = {
-      kms_key = one(aws_ecs_cluster.this.configuration[*].managed_storage_configuration[0].kms_key_id)
+      kms_key = one(aws_ecs_cluster.this.configuration[0].managed_storage_configuration[*].kms_key_id)
     }
     fargate_ephemeral_storage = {
-      kms_key = one(aws_ecs_cluster.this.configuration[*].managed_storage_configuration[0].fargate_ephemeral_storage_kms_key_id)
+      kms_key = one(aws_ecs_cluster.this.configuration[0].managed_storage_configuration[*].fargate_ephemeral_storage_kms_key_id)
     }
   }
 }

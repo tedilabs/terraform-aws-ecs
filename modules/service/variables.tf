@@ -162,6 +162,8 @@ variable "deployment" {
     (Optional) `health_check_grace_period` - The period of time, in seconds, that the service scheduler ignores unhealthy Elastic Load Balancing, VPC Lattice, and container health checks after a task has first started. If you do not use any of the health checks, then `health_check_grace_period` is unused. If your service's tasks take a while to start and respond, you can specify a health check grace period of up to 2,147,483,647 seconds (about 69 years). During that time, the service scheduler ignores the health check status. This grace period can prevent the service scheduler from marking tasks as unhealthy and stopping them before they have time to come up.
     (Optional) `min_running_tasks_percent` - The lower limit (as a percentage of `desired_count`) of the number of running tasks that must remain running and healthy in a service during a deployment. Defaults to `100`. When `deployment.scheduling_strategy` is `DAEMON`, `min_healthy_percent` has to be less than `100`.
     (Optional) `max_running_tasks_percent` - The upper limit (as a percentage of `desired_count`) of the number of running tasks that can be running in a service during a deployment. Defaults to `200`. When `deployment.scheduling_strategy` is `DAEMON`, `max_healthy_percent` is always `100`.
+    (Optional) `strategy` - The ECS deployment strategy. Valid values are `ROLLING`, `BLUE_GREEN`. When omitted, Terraform does not configure a deployment strategy and preserves the existing rolling behavior.
+    (Optional) `bake_time_in_minutes` - The number of minutes to wait after a deployment is fully provisioned before terminating the old deployment. Valid range is `0` to `1440`. Only applicable when `strategy` is configured.
     (Optional) `failure_detection` - A configuration of the deployment failure detection. `failure_detection` as defined below.
       (Optional) `circuit_breaker` - A configuration of the deployment circuit breaker. `circuit_breaker` as defined below.
         (Optional) `enabled` - Whether to enable the deployment circuit breaker logic. If the service can't reach a steady state because a task failed to launch, the deployment fails. Defaults to `true`.
@@ -179,6 +181,8 @@ variable "deployment" {
     health_check_grace_period             = optional(number, 0)
     min_running_tasks_percent             = optional(number, 100)
     max_running_tasks_percent             = optional(number, 200)
+    strategy                              = optional(string)
+    bake_time_in_minutes                  = optional(number)
     failure_detection = optional(object({
       circuit_breaker = optional(object({
         enabled             = optional(bool, true)
@@ -208,6 +212,28 @@ variable "deployment" {
       var.deployment.scheduling_strategy == "DAEMON" && var.deployment.min_running_tasks_percent < 100,
     ])
     error_message = "`deployment.min_running_tasks_percent` must be less than 100 when `deployment.scheduling_strategy` is `DAEMON`."
+  }
+  validation {
+    condition = (var.deployment.strategy == null
+      ? true
+      : contains(["ROLLING", "BLUE_GREEN"], var.deployment.strategy)
+    )
+    error_message = "Valid values for `deployment.strategy` are `ROLLING`, `BLUE_GREEN`."
+  }
+  validation {
+    condition = (var.deployment.bake_time_in_minutes == null
+      ? true
+      : var.deployment.bake_time_in_minutes >= 0 && var.deployment.bake_time_in_minutes <= 1440
+    )
+    error_message = "`deployment.bake_time_in_minutes` must be between 0 and 1440."
+  }
+  validation {
+    condition     = var.deployment.bake_time_in_minutes == null || var.deployment.strategy != null
+    error_message = "`deployment.strategy` must be configured when `deployment.bake_time_in_minutes` is set."
+  }
+  validation {
+    condition     = var.deployment.strategy != "BLUE_GREEN" || var.deployment.controller_type == "ECS"
+    error_message = "`deployment.controller_type` must be `ECS` when `deployment.strategy` is `BLUE_GREEN`."
   }
 }
 
@@ -309,6 +335,11 @@ variable "load_balancers" {
     (Required) `container` - A configuration of the container to associate with the load balancer. `container` as defined below.
       (Required) `name` - The name of the container to associate with the load balancer.
       (Required) `port` - The port on the container to associate with the load balancer.
+    (Optional) `advanced_configuration` - A configuration for ECS native blue/green deployments. Required for every load balancer when `deployment.strategy` is `BLUE_GREEN`.
+      (Required) `alternate_target_group` - The ARN of the alternate target group.
+      (Required) `production_listener_rule` - The ARN of the listener rule that routes production traffic.
+      (Optional) `test_listener_rule` - The ARN of the listener rule that routes test traffic.
+      (Required) `infrastructure_role` - The ARN of the ECS infrastructure role that allows ECS to manage the target groups and listener rules.
   EOF
   type = list(object({
     target_group = string
@@ -316,9 +347,37 @@ variable "load_balancers" {
       name = string
       port = number
     })
+    advanced_configuration = optional(object({
+      alternate_target_group   = string
+      production_listener_rule = string
+      test_listener_rule       = optional(string)
+      infrastructure_role      = string
+    }))
   }))
   default  = []
   nullable = false
+
+  validation {
+    condition = (var.deployment.strategy == "BLUE_GREEN"
+      ? length(var.load_balancers) > 0 && alltrue([
+        for load_balancer in var.load_balancers : load_balancer.advanced_configuration != null
+      ])
+      : alltrue([
+        for load_balancer in var.load_balancers : load_balancer.advanced_configuration == null
+      ])
+    )
+    error_message = "`load_balancers.advanced_configuration` must be set for every load balancer only when `deployment.strategy` is `BLUE_GREEN`."
+  }
+  validation {
+    condition = alltrue([
+      for load_balancer in var.load_balancers : (
+        load_balancer.advanced_configuration == null
+        ? true
+        : load_balancer.target_group != load_balancer.advanced_configuration.alternate_target_group
+      )
+    ])
+    error_message = "`load_balancers.advanced_configuration.alternate_target_group` must differ from `load_balancers.target_group`."
+  }
 }
 
 variable "service_connect" {

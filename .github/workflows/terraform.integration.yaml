@@ -67,20 +67,35 @@ jobs:
     needs:
     - changed
     if: ${{ needs.changed.outputs.modified == 'true' }}
-    uses: tedilabs/.github/.github/workflows/terraform.terraform.yaml@main
+    runs-on: ubuntu-latest
 
     strategy:
       matrix:
         path: ${{ fromJson(needs.changed.outputs.modified_directories) }}
 
-    with:
-      terraform_target_dir: ${{ matrix.path }}
-      terraform_version: latest
-      terraform_host: app.terraform.io
-    secrets:
-      gh_token: ${{ secrets.GITHUB_TOKEN }}
-      token: ${{ secrets.GITHUB_TOKEN }}
-      terraform_token: ${{ secrets.TERRAFORM_TOKEN }}
+    steps:
+    - name: Checkout
+      uses: actions/checkout@v6
+
+    - name: Setup Terraform
+      uses: hashicorp/setup-terraform@v2
+      with:
+        cli_config_credentials_hostname: app.terraform.io
+        cli_config_credentials_token: ${{ secrets.TERRAFORM_TOKEN }}
+        terraform_version: latest
+
+    - name: Terraform Format
+      run: terraform -chdir=${{ matrix.path }} fmt -check -diff -no-color
+      continue-on-error: true
+
+    - name: Terraform Init and Validate
+      run: |
+        terraform -chdir=${{ matrix.path }} init -backend=false
+        terraform -chdir=${{ matrix.path }} validate -no-color
+
+    - name: Terraform Test
+      if: ${{ matrix.path == 'modules/service' }}
+      run: terraform -chdir=${{ matrix.path }} test -no-color
 
 
   tflint:

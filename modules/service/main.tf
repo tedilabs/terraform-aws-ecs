@@ -35,8 +35,6 @@ locals {
 
 # TODO:
 # task_definition - (Optional) Family and revision (family:revision) or full ARN of the task definition that you want to run in your service. Required unless using the EXTERNAL deployment controller. If a revision is not specified, the latest ACTIVE revision is used.
-# deployment_configuration - (Optional) Configuration block for deployment settings. See below.
-# `load_balancer.advanced_configuration`
 # service_connect_configuration - (Optional) ECS Service Connect configuration for this service to discover and connect to services, and be discovered by, and connected from, other services within a namespace. See below.
 # service_registries - (Optional) Service discovery registries for the service. The maximum number of service_registries blocks is 1. See below.
 # sigint_rollback - (Optional) Whether to enable graceful termination of deployments using SIGINT signals. When enabled, allows customers to safely cancel an in-progress deployment and automatically trigger a rollback to the previous stable state. Defaults to false. Only applicable when using ECS deployment controller and requires wait_for_steady_state = true.
@@ -44,7 +42,6 @@ locals {
 # vpc_lattice_configurations - (Optional) The VPC Lattice configuration for your service that allows Lattice to connect, secure, and monitor your service across multiple accounts and VPCs. See below.
 #
 # INFO: Not supported attributes
-# - `deployment_configuration` (BLUE_GREEN/LINEAR/CANARY strategies)
 # - `iam_role` (If your account has already created the Amazon ECS service-linked role, that role is used by default for your service unless you specify a role here.)
 # - `load_balancer.elb_name`
 # - `sigint_rollback` (requires BLUE_GREEN deployment strategy)
@@ -119,6 +116,15 @@ resource "aws_ecs_service" "this" {
     : null
   )
 
+  dynamic "deployment_configuration" {
+    for_each = var.deployment.strategy != null ? [var.deployment] : []
+
+    content {
+      strategy             = deployment_configuration.value.strategy
+      bake_time_in_minutes = deployment_configuration.value.bake_time_in_minutes
+    }
+  }
+
   deployment_controller {
     type = var.deployment.controller_type
   }
@@ -176,6 +182,17 @@ resource "aws_ecs_service" "this" {
       target_group_arn = load_balancer.value.target_group
       container_name   = load_balancer.value.container.name
       container_port   = load_balancer.value.container.port
+
+      dynamic "advanced_configuration" {
+        for_each = load_balancer.value.advanced_configuration != null ? [load_balancer.value.advanced_configuration] : []
+
+        content {
+          alternate_target_group_arn = advanced_configuration.value.alternate_target_group
+          production_listener_rule   = advanced_configuration.value.production_listener_rule
+          test_listener_rule         = advanced_configuration.value.test_listener_rule
+          role_arn                   = advanced_configuration.value.infrastructure_role
+        }
+      }
     }
   }
 

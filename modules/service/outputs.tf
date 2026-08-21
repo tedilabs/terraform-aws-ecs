@@ -112,6 +112,8 @@ output "deployment" {
     health_check_grace_period             = aws_ecs_service.this.health_check_grace_period_seconds
     min_running_tasks_percent             = aws_ecs_service.this.deployment_minimum_healthy_percent
     max_running_tasks_percent             = aws_ecs_service.this.deployment_maximum_percent
+    strategy                              = var.deployment.strategy
+    bake_time_in_minutes                  = var.deployment.bake_time_in_minutes
     failure_detection = {
       circuit_breaker = {
         enabled             = aws_ecs_service.this.deployment_circuit_breaker[0].enable
@@ -154,6 +156,15 @@ output "load_balancers" {
         name = lb.container_name
         port = lb.container_port
       }
+      advanced_configuration = (length(lb.advanced_configuration) > 0
+        ? {
+          alternate_target_group   = lb.advanced_configuration[0].alternate_target_group_arn
+          production_listener_rule = lb.advanced_configuration[0].production_listener_rule
+          test_listener_rule       = lb.advanced_configuration[0].test_listener_rule
+          infrastructure_role      = lb.advanced_configuration[0].role_arn
+        }
+        : null
+      )
     }
   ]
 }

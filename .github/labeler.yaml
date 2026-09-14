@@ -1,10 +1,4 @@
 # Modules
-
-":floppy_disk: capacity-provider":
-- changed-files:
-  - any-glob-to-any-file:
-    - modules/capacity-provider/**/*
-
 ":floppy_disk: cluster":
 - changed-files:
   - any-glob-to-any-file:

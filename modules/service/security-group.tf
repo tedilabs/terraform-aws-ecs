@@ -32,7 +32,7 @@ module "security_group" {
 
   region = var.region
 
-  name        = coalesce(var.default_security_group.name, local.metadata.name)
+  name        = coalesce(var.default_security_group.name, var.name)
   description = var.default_security_group.description
   vpc_id      = data.aws_subnet.this[0].vpc_id
 

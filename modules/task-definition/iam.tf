@@ -11,7 +11,7 @@ locals {
 
 module "role__task_execution" {
   source  = "tedilabs/account/aws//modules/iam-role"
-  version = "~> 0.33.0"
+  version = "~> 0.34.0"
 
   count = var.default_task_execution_role.enabled ? 1 : 0
 
@@ -52,6 +52,10 @@ module "role__task_execution" {
     local.module_tags,
     var.tags,
   )
+
+  telemetry = {
+    enabled = false
+  }
 }
 
 
@@ -61,7 +65,7 @@ module "role__task_execution" {
 
 module "role__task" {
   source  = "tedilabs/account/aws//modules/iam-role"
-  version = "~> 0.33.0"
+  version = "~> 0.34.0"
 
   count = var.default_task_role.enabled ? 1 : 0
 
@@ -99,4 +103,8 @@ module "role__task" {
     local.module_tags,
     var.tags,
   )
+
+  telemetry = {
+    enabled = false
+  }
 }

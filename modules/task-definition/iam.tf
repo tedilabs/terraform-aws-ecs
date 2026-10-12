@@ -35,6 +35,8 @@ module "role__task_execution" {
     }
   ]
 
+  assumable_roles = var.default_task_execution_role.assumable_roles
+
   policies = concat(
     ["arn:aws:iam::aws:policy/service-role/AmazonECSTaskExecutionRolePolicy"],
     var.default_task_execution_role.policies,
@@ -88,6 +90,8 @@ module "role__task" {
       ]
     }
   ]
+
+  assumable_roles = var.default_task_role.assumable_roles
 
   policies             = var.default_task_role.policies
   inline_policies      = var.default_task_role.inline_policies

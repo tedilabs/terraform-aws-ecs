@@ -275,6 +275,7 @@ variable "default_task_execution_role" {
     (Optional) `name` - The name of the default task execution role. Defaults to `ecs-task-execution-$${var.name}`.
     (Optional) `path` - The path of the default task execution role. Defaults to `/`.
     (Optional) `description` - The description of the default task execution role. Defaults to `Managed by Terraform.`.
+    (Optional) `assumable_roles` - A set of IAM role ARNs that can be assumed by this role. Defaults to `[]`.
     (Optional) `policies` - A list of IAM policy ARNs to attach to the role. `AmazonECSTaskExecutionRolePolicy` is always attached. Defaults to `[]`.
     (Optional) `inline_policies` - A map of inline IAM policies to attach to the default service role. (`name` => `policy`). Defaults to `{}`.
     (Optional) `permissions_boundary` - The ARN of the IAM policy to use as permissions boundary.
@@ -285,6 +286,7 @@ variable "default_task_execution_role" {
     path        = optional(string, "/")
     description = optional(string, "Managed by Terraform.")
 
+    assumable_roles      = optional(set(string), [])
     policies             = optional(list(string), [])
     inline_policies      = optional(map(string), {})
     permissions_boundary = optional(string)
@@ -307,6 +309,7 @@ variable "default_task_role" {
     (Optional) `name` - The name of the default task role. Defaults to `{task-definition-name}-task`.
     (Optional) `path` - The path of the default task role. Defaults to `/`.
     (Optional) `description` - The description of the default task role. Defaults to `Managed by Terraform.`.
+    (Optional) `assumable_roles` - A set of IAM role ARNs that can be assumed by this role. Defaults to `[]`.
     (Optional) `policies` - A list of IAM policy ARNs to attach to the role. Defaults to `[]`.
     (Optional) `inline_policies` - A map of inline IAM policies to attach to the default service role. (`name` => `policy`). Defaults to `{}`.
     (Optional) `permissions_boundary` - The ARN of the IAM policy to use as permissions boundary.
@@ -317,6 +320,7 @@ variable "default_task_role" {
     path        = optional(string, "/")
     description = optional(string, "Managed by Terraform.")
 
+    assumable_roles      = optional(set(string), [])
     policies             = optional(list(string), [])
     inline_policies      = optional(map(string), {})
     permissions_boundary = optional(string)

@@ -126,7 +126,7 @@ output "volumes" {
           efs = {
             file_system             = volume.efs_volume_configuration[0].file_system_id
             root_directory          = volume.efs_volume_configuration[0].root_directory
-            transit_encryption      = volume.efs_volume_configuration[0].transit_encryption ? "ENABLED" : "DISABLED"
+            transit_encryption      = volume.efs_volume_configuration[0].transit_encryption
             transit_encryption_port = volume.efs_volume_configuration[0].transit_encryption_port
             authorization = {
               iam_enabled  = volume.efs_volume_configuration[0].authorization_config[0].iam == "ENABLED"

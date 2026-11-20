@@ -55,7 +55,7 @@ resource "aws_ecs_task_definition" "this" {
   )
 
   dynamic "runtime_platform" {
-    for_each = (var.runtime.os_family != null && var.runtime.cpu_arch != null
+    for_each = (var.runtime.os_family != null || var.runtime.cpu_arch != null
       ? [var.runtime]
       : []
     )

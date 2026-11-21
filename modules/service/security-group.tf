@@ -1,6 +1,8 @@
 data "aws_subnet" "this" {
   count = local.default_security_group_enabled ? 1 : 0
 
+  region = var.region
+
   id = tolist(var.network_configuration.subnets)[0]
 }
 

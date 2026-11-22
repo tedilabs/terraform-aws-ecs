@@ -279,7 +279,7 @@ resource "aws_appautoscaling_target" "this" {
   region = var.region
 
   service_namespace  = "ecs"
-  resource_id        = "service/${split("/", var.cluster)[1]}/${aws_ecs_service.this.name}"
+  resource_id        = "service/${var.cluster}/${aws_ecs_service.this.name}"
   scalable_dimension = "ecs:service:DesiredCount"
 
   min_capacity = var.auto_scaling.min_count

@@ -277,7 +277,7 @@ variable "default_task_execution_role" {
     (Optional) `description` - The description of the default task execution role. Defaults to `Managed by Terraform.`.
     (Optional) `assumable_roles` - A set of IAM role ARNs that can be assumed by this role. Defaults to `[]`.
     (Optional) `policies` - A list of IAM policy ARNs to attach to the role. `AmazonECSTaskExecutionRolePolicy` is always attached. Defaults to `[]`.
-    (Optional) `inline_policies` - A map of inline IAM policies to attach to the default service role. (`name` => `policy`). Defaults to `{}`.
+    (Optional) `inline_policies` - A map of inline IAM policies to attach to the default task execution role. (`name` => `policy`). Defaults to `{}`.
     (Optional) `permissions_boundary` - The ARN of the IAM policy to use as permissions boundary.
   EOF
   type = object({
@@ -311,7 +311,7 @@ variable "default_task_role" {
     (Optional) `description` - The description of the default task role. Defaults to `Managed by Terraform.`.
     (Optional) `assumable_roles` - A set of IAM role ARNs that can be assumed by this role. Defaults to `[]`.
     (Optional) `policies` - A list of IAM policy ARNs to attach to the role. Defaults to `[]`.
-    (Optional) `inline_policies` - A map of inline IAM policies to attach to the default service role. (`name` => `policy`). Defaults to `{}`.
+    (Optional) `inline_policies` - A map of inline IAM policies to attach to the default task role. (`name` => `policy`). Defaults to `{}`.
     (Optional) `permissions_boundary` - The ARN of the IAM policy to use as permissions boundary.
   EOF
   type = object({

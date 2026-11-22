@@ -57,8 +57,8 @@ variable "runtime" {
 variable "placement_constraints" {
   description = <<EOF
   (Optional) A list of placement constraints for the task definition. You can use constraints to place tasks based on member attributes. Maximum number of `placement_constraints` is `10`. Each item of `placement_constraints` as defined below.
-    (Optional) `type` - The type of constraint. Use `memberOf` to restrict the selection to a group of valid candidates. Deefaults to `memberOf`. Note that `distinctInstance` is not supported in task definitions.
-    (Reuiqred) `expression` - The Cluster Query Language expression to apply to the constraint.
+    (Optional) `type` - The type of constraint. Use `memberOf` to restrict the selection to a group of valid candidates. Defaults to `memberOf`. Note that `distinctInstance` is not supported in task definitions.
+    (Required) `expression` - The Cluster Query Language expression to apply to the constraint.
   EOF
   type = list(object({
     type       = optional(string, "memberOf")
@@ -139,7 +139,7 @@ variable "ephemeral_storage_size" {
 
 variable "volumes" {
   description = <<EOF
-  (Optional) A list of volume configurations for tasks launched using this task definition. Only one volume configured at launch si supported. Each item of `volumes` as defined below.
+  (Optional) A list of volume configurations for tasks launched using this task definition. Only one volume configured at launch is supported. Each item of `volumes` as defined below.
     (Required) `name` - The name of the volume. Up to 255 letters (uppercase and lowercase), numbers, underscores, and hyphens are allowed.
     (Optional) `type` - A source type for the volume. Valid values are `CONFIGURE_AT_LAUNCH`, `HOST`, `DOCKER`, `EFS`, `FSX_WINDOWS_FILE_SERVER` and `S3_FILES`. Defaults to `HOST`.
     (Optional) `host` - The host volume configuration. `host` as defined below.
@@ -155,7 +155,7 @@ variable "volumes" {
     (Optional) `efs` - The EFS volume configuration. `efs` as defined below.
       (Required) `file_system` - The ID of the EFS file system.
       (Optional) `root_directory` - The directory within the EFS file system to mount as the root directory. Defaults to `/`.
-      (Optional) `transit_encryption_enabled` - Whether to use encryption in transit between the ECS host and the EFS file system. Transit encryption must be truned on if EFS IAM Authorization is used. Defaults to `false`.
+      (Optional) `transit_encryption_enabled` - Whether to use encryption in transit between the ECS host and the EFS file system. Transit encryption must be turned on if EFS IAM Authorization is used. Defaults to `false`.
       (Optional) `transit_encryption_port` - The port to use when sending encrypted data between the Amazon ECS host and the Amazon EFS server. If you do not specify a transit encryption port, it will use the port selection strategy that the Amazon EFS mount helper uses.
       (Optional) `authorization` - The authorization configuration for the EFS volume. `authorization` as defined below.
         (Optional) `iam_enabled` - Whether to use the Amazon ECS task role defined in a task definition when mounting the Amazon EFS file system. If it is turned on, transit encryption must be turned on in the EFSVolumeConfiguration. Defaults to `false`.

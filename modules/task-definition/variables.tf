@@ -223,6 +223,17 @@ variable "volumes" {
   validation {
     condition = alltrue([
       for volume in var.volumes :
+      lookup({
+        "EFS"                     = volume.efs != null
+        "FSX_WINDOWS_FILE_SERVER" = volume.fsx_windows_file_server != null
+        "S3_FILES"                = volume.s3_files != null
+      }, volume.type, true)
+    ])
+    error_message = "`efs`, `fsx_windows_file_server`, or `s3_files` in `volumes` is required when `type` is `EFS`, `FSX_WINDOWS_FILE_SERVER`, or `S3_FILES` respectively."
+  }
+  validation {
+    condition = alltrue([
+      for volume in var.volumes :
       contains(["task", "shared"], volume.docker.scope)
       if volume.type == "DOCKER"
     ])

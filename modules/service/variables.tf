@@ -82,7 +82,7 @@ variable "runtime" {
   validation {
     condition = (
       var.runtime.fargate.platform_version == "LATEST" ||
-      regex("^\\d+\\.\\d+\\.\\d+$", var.runtime.fargate.platform_version) != null
+      can(regex("^\\d+\\.\\d+\\.\\d+$", var.runtime.fargate.platform_version))
     )
     error_message = "`runtime.fargate.platform_version` must be `LATEST` or in `x.y.z` format like `1.4.0`."
   }

@@ -6,7 +6,7 @@ variable "region" {
 }
 
 variable "name" {
-  description = "(Required) A unique name for your task definition. It can used to track multiple versions of the same task definition."
+  description = "(Required) A unique name for your task definition. It can be used to track multiple versions of the same task definition."
   type        = string
   nullable    = false
 }
@@ -85,7 +85,7 @@ variable "resources" {
   (Optional) A configuration for the resource requirements of the task. NOTE: Task-level CPU and memory parameters are ignored for Windows containers. We recommend specifying container-level resources for Windows containers. `resources` as defined below.
     (Optional) `cpu` - The number of cpu units used by the task.  It can be expressed as an integer using CPU units (for example, `1024`) or as a string using vCPUs (for example, `1 vCPU` or `1 vcpu`) in a task definition. If you're using the EC2 launch type or external launch type, this field is optional. Supported values are between 128 CPU units (0.125 vCPUs) and 196608 CPU units (192 vCPUs). If you do not specify a value, the parameter is ignored. This field is required for Fargate.
     - The CPU units cannot be less than 1 vCPU when you use Windows containers on Fargate.
-    (Optional) `memory` - The amount of memory (in MiB) used by the task. It can be expressed as an integer using MiB (for example ,`1024`) or as a string using GB (for example, `1GB` or `1 GB`) in a task definition. If using the EC2 launch type, this field is optional.
+    (Optional) `memory` - The amount of memory (in MiB) used by the task. It can be expressed as an integer using MiB (for example, `1024`) or as a string using GB (for example, `1GB` or `1 GB`) in a task definition. If using the EC2 launch type, this field is optional.
   EOF
   type = object({
     cpu    = optional(string)
@@ -237,7 +237,7 @@ variable "namespace_sharing" {
     - On Fargate for Linux containers, the only valid value is `TASK`. For example, monitoring sidecars might need pidMode to access information about other containers running in the same task.
     - If `HOST` is specified, all containers within the tasks that specified the host PID mode on the same container instance share the same process namespace with the host Amazon EC2 instance.
     - If `TASK` is specified, all containers within the specified task share the same process namespace.
-    - If `CONTAINER` is specified, the the default is a private namespace for each container.
+    - If `CONTAINER` is specified, the default is a private namespace for each container.
     - If the `HOST` PID mode is used, there's a heightened risk of undesired process namespace exposure.
     - This parameter is not supported for Windows containers.
     (Optional) `ipc_mode` - The IPC resource namespace to use for the containers in the task. Valid values are `HOST`, `TASK`, `CONTAINER`, `INHERIT`.
@@ -245,7 +245,7 @@ variable "namespace_sharing" {
     - If `TASK` is specified, all containers within the specified task share the same IPC resources.
     - If `CONTAINER` is specified, then IPC resources within the containers of a task are private and not shared with other containers in a task or on the container instance.
     - If `INHERIT` value is specified, then the IPC resource namespace sharing depends on the Docker daemon setting on the container instance.
-    - If the `HOST` IPC mode is used, be aware that there is a heightened of undesired IPC namespace expose.
+    - If the `HOST` IPC mode is used, be aware that there is a heightened risk of undesired IPC namespace exposure.
     - If you are setting namespaced kernel parameters using systemControls for the containers in the task, the following will apply to your IPC resource namespace.
       - For tasks that use the `HOST` IPC mode, IPC namespace related systemControls are not supported.
       - For tasks that use the `TASK` IPC mode, IPC namespace related systemControls will apply to all containers within a task.

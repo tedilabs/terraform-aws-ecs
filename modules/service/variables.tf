@@ -166,7 +166,7 @@ variable "deployment" {
       (Optional) `circuit_breaker` - A configuration of the deployment circuit breaker. `circuit_breaker` as defined below.
         (Optional) `enabled` - Whether to enable the deployment circuit breaker logic. If the service can't reach a steady state because a task failed to launch, the deployment fails. Defaults to `true`.
         (Optional) `rollback_on_failure` - Whether to enable Amazon ECS to roll back the service if a service deployment failure is detected. If rollback is enabled, when a service deployment fails, the service is rolled back to the last deployment that completed successfully. Defaults to `true`.
-      (Optional) `alarms` - A configuration of CloudWatch alarms-based deployment monitoring. `alarms` as defined below.
+      (Optional) `cloudwatch_alarms` - A configuration of CloudWatch alarms-based deployment monitoring. `cloudwatch_alarms` as defined below.
         (Optional) `enabled` - Whether to use CloudWatch alarm option in the service deployment process. If the CloudWatch alarm or alarms that you specify transition to the ALARM state, the deployment fails. Defaults to `false`.
         (Optional) `alarm_names` - A set of CloudWatch alarm names to monitor during deployment. Defaults to `[]`.
         (Optional) `rollback_on_failure` - Whether to configure Amazon ECS to roll back the service if a service deployment fails. Defaults to `true`.

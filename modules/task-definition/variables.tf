@@ -12,7 +12,7 @@ variable "name" {
 }
 
 variable "skip_destroy" {
-  description = "(Optional) Whether to skip destroying the task definition. Defaults to `true`. If `true`, the task definition will be deregistered but not deleted, and can be re-registered later. If `false`, the task definition will be deleted and cannot be re-registered."
+  description = "(Optional) Whether to retain the old revision when the resource is destroyed or replacement is necessary. Defaults to `true`. If `true`, the old revision stays registered (it is not deregistered). If `false`, the old revision is deregistered."
   type        = bool
   default     = true
   nullable    = false
@@ -306,7 +306,7 @@ variable "default_task_role" {
   description = <<EOF
   (Optional) A configuration for the default task role. Use `task_role` if `default_task_role.enabled` is `false`. `default_task_role` as defined below.
     (Optional) `enabled` - Whether to create the default task role. Defaults to `false`.
-    (Optional) `name` - The name of the default task role. Defaults to `{task-definition-name}-task`.
+    (Optional) `name` - The name of the default task role. Defaults to `ecs-task-$${var.name}`.
     (Optional) `path` - The path of the default task role. Defaults to `/`.
     (Optional) `description` - The description of the default task role. Defaults to `Managed by Terraform.`.
     (Optional) `assumable_roles` - A set of IAM role ARNs that can be assumed by this role. Defaults to `[]`.
@@ -330,7 +330,7 @@ variable "default_task_role" {
 }
 
 variable "task_role" {
-  description = "(Optional) The ARN of the task role that allows your ECS task to make calls to other AWS services. Only required if `default_task_role.enabled` is `true` and you want to use a custom role."
+  description = "(Optional) The ARN of the task role that allows your ECS task to make calls to other AWS services. Only used if `default_task_role.enabled` is `false`."
   type        = string
   default     = null
   nullable    = true

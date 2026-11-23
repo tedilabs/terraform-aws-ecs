@@ -33,7 +33,7 @@ output "runtime" {
   The configuration for the runtime platform for the task.
     `launch_types` - The set of launch types required by the task.
     `os_family` - The operating system family used by the task.
-    `cpu_architecture` - The CPU architecture used by the task.
+    `cpu_arch` - The CPU architecture used by the task.
   EOF
   value = {
     launch_types = aws_ecs_task_definition.this.requires_compatibilities

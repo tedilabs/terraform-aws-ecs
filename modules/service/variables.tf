@@ -116,7 +116,7 @@ variable "placement_constraints" {
 
 variable "placement_strategy" {
   description = <<EOF
-  (Optional) A list of placement strategy rules for the service that are taken into consideration during task placement. The maximum number of `placement_strategy` is `5`. Each item of `ordered_placement_strategy` as defined below.
+  (Optional) A list of placement strategy rules for the service that are taken into consideration during task placement. The maximum number of `placement_strategy` is `5`. Each item of `placement_strategy` as defined below.
     (Required) `type` - The type of placement strategy. Valid values are `binpack`, `random`, `spread`.
     (Optional) `field` - The field to apply the placement strategy against.
   EOF
@@ -160,8 +160,8 @@ variable "deployment" {
     (Optional) `controller_type` - The deployment controller type to use. Valid values are `ECS`, `CODE_DEPLOY`, `EXTERNAL`. Defaults to `ECS`.
     (Optional) `availability_zone_rebalancing_enabled` - Whether ECS automatically redistributes tasks within a service across Availability Zones (AZs) to mitigate the risk of impaired application availability due to underlying infrastructure failures and task lifecycle activities. Defaults to `false`.
     (Optional) `health_check_grace_period` - The period of time, in seconds, that the service scheduler ignores unhealthy Elastic Load Balancing, VPC Lattice, and container health checks after a task has first started. If you do not use any of the health checks, then `health_check_grace_period` is unused. If your service's tasks take a while to start and respond, you can specify a health check grace period of up to 2,147,483,647 seconds (about 69 years). During that time, the service scheduler ignores the health check status. This grace period can prevent the service scheduler from marking tasks as unhealthy and stopping them before they have time to come up.
-    (Optional) `min_running_tasks_percent` - The lower limit (as a percentage of `desired_count`) of the number of running tasks that must remain running and healthy in a service during a deployment. Defaults to `100`. When `deployment.scheduling_strategy` is `DAEMON`, `min_healthy_percent` has to be less than `100`.
-    (Optional) `max_running_tasks_percent` - The upper limit (as a percentage of `desired_count`) of the number of running tasks that can be running in a service during a deployment. Defaults to `200`. When `deployment.scheduling_strategy` is `DAEMON`, `max_healthy_percent` is always `100`.
+    (Optional) `min_running_tasks_percent` - The lower limit (as a percentage of `desired_count`) of the number of running tasks that must remain running and healthy in a service during a deployment. Defaults to `100`. When `deployment.scheduling_strategy` is `DAEMON`, `min_running_tasks_percent` has to be less than `100`.
+    (Optional) `max_running_tasks_percent` - The upper limit (as a percentage of `desired_count`) of the number of running tasks that can be running in a service during a deployment. Defaults to `200`. When `deployment.scheduling_strategy` is `DAEMON`, `max_running_tasks_percent` is always `100`.
     (Optional) `failure_detection` - A configuration of the deployment failure detection. `failure_detection` as defined below.
       (Optional) `circuit_breaker` - A configuration of the deployment circuit breaker. `circuit_breaker` as defined below.
         (Optional) `enabled` - Whether to enable the deployment circuit breaker logic. If the service can't reach a steady state because a task failed to launch, the deployment fails. Defaults to `true`.

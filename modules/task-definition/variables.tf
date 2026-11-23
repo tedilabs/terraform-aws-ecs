@@ -276,9 +276,9 @@ variable "default_task_execution_role" {
     (Optional) `path` - The path of the default task execution role. Defaults to `/`.
     (Optional) `description` - The description of the default task execution role. Defaults to `Managed by Terraform.`.
     (Optional) `assumable_roles` - A set of IAM role ARNs that can be assumed by this role. Defaults to `[]`.
-    (Optional) `policies` - A list of IAM policy ARNs to attach to the role. `AmazonECSTaskExecutionRolePolicy` is always attached. Defaults to `[]`.
+    (Optional) `policies` - A list of IAM policy ARNs to attach to the default task execution role. `AmazonECSTaskExecutionRolePolicy` is always attached. Defaults to `[]`.
     (Optional) `inline_policies` - A map of inline IAM policies to attach to the default task execution role. (`name` => `policy`). Defaults to `{}`.
-    (Optional) `permissions_boundary` - The ARN of the IAM policy to use as permissions boundary.
+    (Optional) `permissions_boundary` - The ARN of the IAM policy to use as permissions boundary for the default task execution role.
   EOF
   type = object({
     enabled     = optional(bool, true)
@@ -310,9 +310,9 @@ variable "default_task_role" {
     (Optional) `path` - The path of the default task role. Defaults to `/`.
     (Optional) `description` - The description of the default task role. Defaults to `Managed by Terraform.`.
     (Optional) `assumable_roles` - A set of IAM role ARNs that can be assumed by this role. Defaults to `[]`.
-    (Optional) `policies` - A list of IAM policy ARNs to attach to the role. Defaults to `[]`.
+    (Optional) `policies` - A list of IAM policy ARNs to attach to the default task role. Defaults to `[]`.
     (Optional) `inline_policies` - A map of inline IAM policies to attach to the default task role. (`name` => `policy`). Defaults to `{}`.
-    (Optional) `permissions_boundary` - The ARN of the IAM policy to use as permissions boundary.
+    (Optional) `permissions_boundary` - The ARN of the IAM policy to use as permissions boundary for the default task role.
   EOF
   type = object({
     enabled     = optional(bool, false)
@@ -362,7 +362,7 @@ variable "tags" {
 }
 
 variable "module_tags_enabled" {
-  description = "(Optional) Whether to create AWS Resource Tags for the module informations."
+  description = "(Optional) Whether to create AWS Resource Tags for the module information."
   type        = bool
   default     = true
   nullable    = false
@@ -375,10 +375,10 @@ variable "module_tags_enabled" {
 
 variable "resource_group" {
   description = <<EOF
-  (Optional) Configurations of Resource Group. `resource_group` as defined below.
-    (Optional) `enabled` - Whether to create the resource group. Defaults to `true`.
-    (Optional) `name` - The name of the resource group. Defaults to `""`.
-    (Optional) `description` - The description of the resource group. Defaults to `"Managed by Terraform."`.
+  (Optional) A configuration of Resource Group for this module. `resource_group` as defined below.
+    (Optional) `enabled` - Whether to create Resource Group to find and group AWS resources which are created by this module. Defaults to `true`.
+    (Optional) `name` - The name of Resource Group. A Resource Group name can have a maximum of 127 characters, including letters, numbers, hyphens, dots, and underscores. The name cannot start with `AWS` or `aws`. If not provided, a name will be generated using the module name and instance name.
+    (Optional) `description` - The description of Resource Group. Defaults to `Managed by Terraform.`.
   EOF
   type = object({
     enabled     = optional(bool, true)

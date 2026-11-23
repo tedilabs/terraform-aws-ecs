@@ -6,7 +6,6 @@
 
 Terraform module which creates ECS (Elastic Container Service) related resources on AWS.
 
-- [capacity-provider](./modules/capacity-provider)
 - [cluster](./modules/cluster)
 - [service](./modules/service)
 - [task-definition](./modules/task-definition)
